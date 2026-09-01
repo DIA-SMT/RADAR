@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}RADAR{% endblock %}</title>
+<link rel="icon" type="image/png" href="/static/muni.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --azul: #0561f5;
+    --azul-oscuro: #0348bb;
+    --celeste: #2fadfd;
+    --amarillo: #f2d900;
+    --tinta: #21303f;
+    --gris: #64748b;
+    --fondo: #f2f6fc;
+    --borde: #dfe8f4;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+    background: var(--fondo); color: var(--tinta); font-size: 14.5px; line-height: 1.55;
+  }
+  a { color: var(--azul); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header {
+    background: #fff; padding: 10px 24px;
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  }
+  header img.logo { height: 44px; display: block; }
+  header .marca {
+    font-size: 21px; font-weight: 700; letter-spacing: 2.5px; color: var(--tinta);
+    padding-left: 16px; border-left: 2px solid var(--borde);
+  }
+  header .marca a { color: inherit; text-decoration: none; }
+  header .lema { color: var(--gris); font-size: 12.5px; }
+  .cinta { height: 4px; background: linear-gradient(90deg, var(--azul) 0%, var(--celeste) 70%, var(--amarillo) 100%); }
+  main { max-width: 1150px; margin: 24px auto; padding: 0 20px 60px; }
+  .card {
+    background: #fff; border: 1px solid var(--borde); border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(5,97,245,.05);
+  }
+  .card h2 {
+    font-size: 12.5px; text-transform: uppercase; letter-spacing: .9px;
+    color: var(--gris); margin-bottom: 12px; font-weight: 600;
+  }
+  .badge {
+    display: inline-block; padding: 2px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .6px;
+    color: var(--gris); padding: 8px 10px; border-bottom: 2px solid var(--borde);
+  }
+  td { padding: 10px; border-bottom: 1px solid #ecf2fa; vertical-align: top; }
+  tr.fila:hover { background: #f6faff; cursor: pointer; }
+  .muted { color: var(--gris); font-size: 13px; }
+  select, input[type=text], input[type=email], input[type=password], textarea {
+    font: inherit; padding: 7px 10px; border: 1px solid #c3d4ec; border-radius: 8px;
+    background: #fff; color: inherit;
+  }
+  select:focus, input:focus, textarea:focus { outline: 2px solid var(--celeste); outline-offset: 0; }
+  textarea { width: 100%; resize: vertical; }
+  button {
+    font: inherit; font-weight: 600; padding: 7px 18px; border: 0; border-radius: 8px;
+    background: var(--azul); color: #fff; cursor: pointer;
+  }
+  button:hover { background: var(--azul-oscuro); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  dl.ficha { display: grid; grid-template-columns: 160px 1fr; row-gap: 8px; column-gap: 12px; }
+  dl.ficha dt { color: var(--gris); font-size: 12.5px; padding-top: 2px; }
+  dl.ficha dd { margin: 0; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; }
+  .chip {
+    background: #fff; border: 1px solid var(--borde); border-radius: 999px;
+    padding: 4px 14px; font-size: 12.5px; color: var(--gris);
+  }
+  .chip b { color: var(--tinta); }
+  .decision-box {
+    background: #f2fbf5; border: 1px solid #b9e5c8; border-left: 4px solid #16a34a;
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <a href="/"><img class="logo" src="/static/logo-dia.png" alt="Dirección de IA — S.M. de Tucumán"></a>
+  <div class="marca"><a href="/">📡 RADAR</a></div>
+  <div class="lema">Escucha activa del vecino en redes sociales · Secretaría General · S. M. de Tucumán</div>
+  {% if usuario and "@" in usuario %}
+    <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+      <span class="muted">{{ usuario }}</span>
+      <a href="/logout" style="font-size:13px;">Salir</a>
+    </div>
+  {% endif %}
+</header>
+<div class="cinta"></div>
+<main>
+{% block contenido %}{% endblock %}
+</main>
+</body>
+</html>

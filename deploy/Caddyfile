@@ -1,0 +1,9 @@
+# Reverse proxy con HTTPS automático (Let's Encrypt) — requiere un dominio/subdominio
+# apuntando a la IP del VPS (registro A), p. ej. radar.smt.gob.ar
+#
+# Instalar Caddy (Ubuntu/Debian): https://caddyserver.com/docs/install
+# Copiar este archivo a /etc/caddy/Caddyfile y: sudo systemctl reload caddy
+
+radar.EJEMPLO.gob.ar {
+    reverse_proxy 127.0.0.1:8000
+}

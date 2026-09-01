@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block titulo %}Caso #{{ caso.id }} — RADAR{% endblock %}
+{% block contenido %}
+
+<p style="margin-bottom:14px;"><a href="/">← Volver al listado</a></p>
+
+<div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;">
+  <h1 style="font-size:22px;">Caso #{{ caso.id }}</h1>
+  {% if caso.categoria %}
+    {% set col = COLORES_CATEGORIA.get(caso.categoria, '#64748b') %}
+    <span class="badge" style="background:{{ col }}1a; color:{{ col }}; font-size:13.5px;">{{ caso.categoria }}</span>
+  {% else %}
+    <span class="badge" style="background:#64748b1a; color:#64748b; font-size:13.5px;">Sin clasificar</span>
+  {% endif %}
+  {% if caso.nivel %}
+    <span class="badge" style="background:{{ COLORES_NIVEL[caso.nivel] }}; color:#fff; font-size:13.5px;">
+      {{ caso.nivel }} — {{ NIVELES[caso.nivel].nombre }}</span>
+  {% endif %}
+  {% set colE = COLORES_ESTADO.get(caso.estado, '#64748b') %}
+  <span class="badge" style="background:{{ colE }}1a; color:{{ colE }}; font-size:13.5px;">{{ ESTADOS.get(caso.estado, caso.estado) }}</span>
+  {% if caso.decision %}
+    <span class="badge" style="background:#16a34a; color:#fff; font-size:13.5px;">✔ Con decisión</span>
+  {% endif %}
+</div>
+
+<div class="grid2">
+  <div>
+    <div class="card">
+      <h2>Evidencia aportada</h2>
+      <p style="font-size:15.5px; white-space:pre-wrap; margin-bottom:14px;">«{{ caso.texto }}»</p>
+      {% if caso.captura_path %}
+        <p style="margin-bottom:14px;">
+          <img src="/capturas/{{ caso.captura_path }}" alt="Captura aportada"
+               style="max-width:100%; border:1px solid var(--borde); border-radius:8px;">
+        </p>
+      {% endif %}
+      <dl class="ficha">
+        <dt>Plataforma</dt><dd>{{ caso.plataforma or "Sin dato" }}</dd>
+        <dt>Enlace</dt>
+        {% set enlace = caso.url | url_segura %}
+        <dd>{% if enlace %}<a href="{{ enlace }}" target="_blank" rel="noopener noreferrer">{{ enlace | truncate(60) }}</a>
+            {% elif caso.url %}{{ caso.url | truncate(60) }} <span class="muted">(no es un enlace http, no clickeable)</span>
+            {% else %}Sin enlace{% endif %}</dd>
+        <dt>Por qué es relevante</dt><dd>{{ caso.relevancia or "Sin contexto aportado" }}</dd>
+        <dt>Cargado por</dt><dd>{{ caso.funcionario_nombre or "Sin dato" }}</dd>
+        <dt>Ingresado</dt><dd>{{ caso.creado_en | fecha }}</dd>
+        {% if caso.actualizado_en %}<dt>Última actualización</dt><dd>{{ caso.actualizado_en | fecha }}</dd>{% endif %}
+      </dl>
+    </div>
+
+    <div class="card">
+      <h2>Debate del comité</h2>
+      {% if comentarios %}
+        {% for com in comentarios %}
+          <div style="border-left:3px solid var(--celeste); padding:2px 0 2px 12px; margin-bottom:12px;">
+            <div class="muted"><b style="color:var(--tinta);">{{ com.autor }}</b> · {{ com.creado_en | fecha }}</div>
+            <div style="white-space:pre-wrap;">{{ com.texto }}</div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="muted" style="margin-bottom:12px;">Nadie opinó todavía: abrí el debate.</p>
+      {% endif %}
+      <form method="post" action="/caso/{{ caso.id }}/comentario">
+        <div style="display:flex; gap:10px; margin-bottom:8px;">
+          <input type="text" name="autor" placeholder="Tu nombre" value="{{ autor_defecto or '' }}" style="flex:1;">
+        </div>
+        <textarea name="texto" rows="3" placeholder="Tu aporte al debate: diagnóstico, propuesta, información del área..." required></textarea>
+        <div style="margin-top:8px;"><button type="submit">Aportar al debate</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h2>Resolución del caso</h2>
+      {% if caso.decision %}
+        <div class="decision-box">
+          <div style="font-weight:600; color:#15803d; font-size:12.5px; text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;">Decisión tomada</div>
+          <div style="white-space:pre-wrap;">{{ caso.decision }}</div>
+          <div class="muted" style="margin-top:6px;">{{ caso.decision_autor }} · {{ caso.decision_fecha | fecha }}</div>
+        </div>
+      {% else %}
+        <p class="muted" style="margin-bottom:12px;">Todavía no hay una decisión asentada. Cuando el comité resuelva qué hacer con este caso, dejalo escrito acá.</p>
+      {% endif %}
+      <form method="post" action="/caso/{{ caso.id }}/decision" style="margin-bottom:14px;">
+        <textarea name="decision" rows="3" required
+          placeholder="{% if caso.decision %}Reemplazar la decisión (la actual queda pisada)...{% else %}Qué se decidió hacer: solución, derivación, respuesta pública, plazo...{% endif %}"></textarea>
+        <div style="display:flex; gap:10px; margin-top:8px; align-items:center;">
+          <input type="text" name="autor" placeholder="Quién decide" value="{{ autor_defecto or '' }}" style="flex:1;">
+          <button type="submit">{% if caso.decision %}Actualizar decisión{% else %}Asentar decisión{% endif %}</button>
+        </div>
+      </form>
+      <form method="post" action="/caso/{{ caso.id }}/estado"
+            style="display:flex; gap:10px; align-items:center; border-top:1px solid #ecf2fa; padding-top:12px;">
+        <span class="muted">Estado:</span>
+        <select name="estado">
+          {% for clave, nombre in ESTADOS.items() %}
+            <option value="{{ clave }}" {% if caso.estado == clave %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Actualizar</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Clasificación</h2>
+      {% if caso.categoria %}
+      {% if caso.resumen %}
+        <p style="background:#f2f8ff; border:1px solid #c9e0fb; border-radius:10px; padding:10px 12px; margin-bottom:14px;">
+          📝 {{ caso.resumen }}
+        </p>
+      {% endif %}
+      <dl class="ficha" style="margin-bottom:14px;">
+        <dt>Tema institucional</dt><dd>{{ caso.tema or "Sin definir" }}</dd>
+        <dt>Ubicación</dt>
+        <dd>{% if caso.ubicacion %}📍 {{ caso.ubicacion }} <span class="muted">(hipótesis: el área la confirma)</span>{% else %}Sin ubicación{% endif %}</dd>
+        <dt>Área competente</dt><dd>{{ caso.area or "Sin definir" }}</dd>
+        <dt>Acción recomendada</dt><dd>{{ caso.accion_recomendada or "Sin definir" }}</dd>
+        {% if caso.justificacion %}<dt>Análisis</dt><dd class="muted">{{ caso.justificacion }}</dd>{% endif %}
+        <dt>Origen</dt><dd class="muted">{{ ORIGENES.get(caso.clasificacion_origen, caso.clasificacion_origen or "Sin dato") }}</dd>
+      </dl>
+      {% else %}
+      <p class="muted" style="margin-bottom:14px;">Este caso todavía no fue clasificado.</p>
+      {% endif %}
+      <form method="post" action="/caso/{{ caso.id }}/clasificacion"
+            style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; border-top:1px solid #ecf2fa; padding-top:12px;">
+        <span class="muted">Corregir:</span>
+        <select name="categoria">
+          {% for nombre in CATEGORIAS %}
+            <option value="{{ nombre }}" {% if caso.categoria == nombre %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+        <select name="nivel">
+          {% for codigo, niv in NIVELES.items() %}
+            <option value="{{ codigo }}" {% if caso.nivel == codigo %}selected{% endif %}>{{ codigo }} — {{ niv.nombre }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit">Guardar</button>
+      </form>
+    </div>
+
+    {% if manual_cat %}
+    <div class="card">
+      <h2>Manual de actuación</h2>
+      <dl class="ficha">
+        <dt>Situación</dt><dd>{{ manual_cat.descripcion }}</dd>
+        <dt>Procedimiento</dt><dd><b>{{ manual_cat.procedimiento }}</b></dd>
+        <dt>Responsable</dt><dd>{{ manual_cat.responsable }}</dd>
+        {% if manual_niv %}
+        <dt>Escalamiento {{ caso.nivel }}</dt>
+        <dd>{{ manual_niv.escalamiento }} <span class="muted">Plazo: {{ manual_niv.plazo }}.</span></dd>
+        {% endif %}
+      </dl>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <h2>Qué no hacer</h2>
+      <ul style="padding-left:18px;" class="muted">
+        {% for regla in QUE_NO_HACER %}
+          <li style="margin-bottom:6px;">{{ regla }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

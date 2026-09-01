@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block titulo %}RADAR — Casos{% endblock %}
+{% block contenido %}
+
+<div class="chips">
+  <span class="chip">Total: <b>{{ conteo.total }}</b></span>
+  {% for codigo, niv in NIVELES.items() %}
+    <span class="chip" style="border-color: {{ COLORES_NIVEL[codigo] }}55;">
+      <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ codigo }}</span>
+      {{ niv.nombre }}: <b>{{ conteo.por_nivel.get(codigo, 0) }}</b>
+    </span>
+  {% endfor %}
+</div>
+
+<div class="card">
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <select name="categoria">
+      <option value="">Todas las categorías</option>
+      {% for nombre in CATEGORIAS %}
+        <option value="{{ nombre }}" {% if filtros.categoria == nombre %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+    <select name="nivel">
+      <option value="">Todos los niveles</option>
+      {% for codigo, niv in NIVELES.items() %}
+        <option value="{{ codigo }}" {% if filtros.nivel == codigo %}selected{% endif %}>{{ codigo }} — {{ niv.nombre }}</option>
+      {% endfor %}
+    </select>
+    <select name="estado">
+      <option value="">Todos los estados</option>
+      {% for clave, nombre in ESTADOS.items() %}
+        <option value="{{ clave }}" {% if filtros.estado == clave %}selected{% endif %}>{{ nombre }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="q" placeholder="Buscar texto, tema, ubicación..." value="{{ filtros.q }}" style="flex:1; min-width:180px;">
+    <button type="submit">Filtrar</button>
+    {% if hay_filtros %}<a href="/">Limpiar</a>{% endif %}
+  </form>
+</div>
+
+<div class="card" style="padding: 8px 12px;">
+{% if casos %}
+  <table>
+    <thead>
+      <tr>
+        <th style="width:52px;">#</th>
+        <th style="width:110px;">Fecha</th>
+        <th>Evidencia</th>
+        <th style="width:150px;">Categoría</th>
+        <th style="width:60px;">Nivel</th>
+        <th style="width:140px;">Área</th>
+        <th style="width:110px;">Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for c in casos %}
+      <tr class="fila" onclick="location.href='/caso/{{ c.id }}'">
+        <td><b>{{ c.id }}</b></td>
+        <td class="muted">{{ c.creado_en | fecha }}</td>
+        <td>
+          {% if c.resumen %}{{ c.resumen | truncate(110) }}{% else %}«{{ c.texto | truncate(95) }}»{% endif %}
+          <div class="muted">
+            {{ c.plataforma or "Plataforma s/d" }}{% if c.ubicacion %} · 📍 {{ c.ubicacion }}{% endif %}{% if c.tema %} · {{ c.tema }}{% endif %}
+          </div>
+        </td>
+        <td>
+          {% if c.categoria %}
+            {% set col = COLORES_CATEGORIA.get(c.categoria, '#64748b') %}
+            <span class="badge" style="background:{{ col }}1a; color:{{ col }};">{{ c.categoria }}</span>
+          {% else %}
+            <span class="badge" style="background:#64748b1a; color:#64748b;">Sin clasificar</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if c.nivel %}
+            <span class="badge" style="background:{{ COLORES_NIVEL[c.nivel] }}; color:#fff;">{{ c.nivel }}</span>
+          {% else %}<span class="muted">—</span>{% endif %}
+        </td>
+        <td>{{ c.area or "—" }}</td>
+        <td>
+          {% set colE = COLORES_ESTADO.get(c.estado, '#64748b') %}
+          <span class="badge" style="background:{{ colE }}1a; color:{{ colE }};">{{ ESTADOS.get(c.estado, c.estado) }}</span>
+          {% if c.decision %}<span class="badge" title="Tiene decisión del comité" style="background:#16a34a1a; color:#16a34a;">✔</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p style="padding: 30px; text-align:center;" class="muted">
+    {% if hay_filtros %}No hay casos que coincidan con el filtro.{% else %}
+    Todavía no hay casos. Cargá el primero mandándole un mensaje al bot de Telegram,
+    o corré <code>python seed.py</code> para ver casos de ejemplo.{% endif %}
+  </p>
+{% endif %}
+</div>
+
+{% endblock %}

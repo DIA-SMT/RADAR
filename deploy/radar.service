@@ -1,0 +1,22 @@
+# Servicio systemd para RADAR — copiar a /etc/systemd/system/radar.service
+# Ajustar User y rutas si se instala en otro lado.
+#
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now radar
+#   journalctl -u radar -f        # ver logs
+
+[Unit]
+Description=RADAR - bot + panel de escucha activa (Municipalidad SMT)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=radar
+WorkingDirectory=/opt/radar
+ExecStart=/opt/radar/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+# El .env vive en /opt/radar/.env y lo lee la app; no hace falta Environment= acá.
+
+[Install]
+WantedBy=multi-user.target

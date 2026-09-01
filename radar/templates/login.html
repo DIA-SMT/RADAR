@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block titulo %}Ingresar — RADAR{% endblock %}
+{% block contenido %}
+
+<div style="max-width:400px; margin: 8vh auto 0;">
+  <div class="card" style="padding: 28px;">
+    <div style="text-align:center; margin-bottom:18px;">
+      <img src="/static/muni.png" alt="" style="height:64px;">
+      <h1 style="font-size:20px; letter-spacing:2px; margin-top:8px;">RADAR</h1>
+      <p class="muted">Escucha activa del vecino</p>
+    </div>
+    {% if error %}
+      <p style="background:#fdecec; border:1px solid #f5b5b5; color:#b91c1c; border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:13.5px;">
+        {{ error }}
+      </p>
+    {% endif %}
+    <form method="post" action="/login">
+      <label class="muted" for="email">Email</label>
+      <input type="email" id="email" name="email" required autofocus autocomplete="username"
+             style="width:100%; margin:4px 0 14px;">
+      <label class="muted" for="password">Contraseña</label>
+      <input type="password" id="password" name="password" required autocomplete="current-password"
+             style="width:100%; margin:4px 0 18px; font: inherit; padding:7px 10px; border:1px solid #c3d4ec; border-radius:8px;">
+      <button type="submit" style="width:100%;">Ingresar</button>
+    </form>
+    <p class="muted" style="margin-top:14px; font-size:12.5px; text-align:center;">
+      Los usuarios los gestiona la Dirección de IA.
+    </p>
+  </div>
+</div>
+
+{% endblock %}
