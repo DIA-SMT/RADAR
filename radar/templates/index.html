@@ -6,7 +6,7 @@
   <span class="chip">Total: <b>{{ conteo.total }}</b></span>
   {% for codigo, niv in NIVELES.items() %}
     <span class="chip" style="border-color: {{ COLORES_NIVEL[codigo] }}55;">
-      <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ codigo }}</span>
+      <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ ICONOS_NIVEL[codigo] }} {{ codigo }}</span>
       {{ niv.nombre }}: <b>{{ conteo.por_nivel.get(codigo, 0) }}</b>
     </span>
   {% endfor %}
@@ -73,7 +73,7 @@
         </td>
         <td>
           {% if c.nivel %}
-            <span class="badge" style="background:{{ COLORES_NIVEL[c.nivel] }}; color:#fff;">{{ c.nivel }}</span>
+            <span class="badge" style="background:{{ COLORES_NIVEL[c.nivel] }}; color:#fff;">{{ ICONOS_NIVEL[c.nivel] }} {{ c.nivel }}</span>
           {% else %}<span class="muted">—</span>{% endif %}
         </td>
         <td>{{ c.area or "—" }}</td>

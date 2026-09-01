@@ -26,6 +26,12 @@ CATEGORIAS = {
         "descripcion": "Afirmación potencialmente errónea que circula.",
         "procedimiento": "Verificar internamente antes de responder. Sin verificación no hay aclaración.",
         "responsable": "Área técnica y Comunicación",
+        "subtipos": {
+            "Error o dato inexacto": "Corrección informativa; contacto directo si el emisor es identificable.",
+            "Rumor": "Monitorear; salir con información verificable solo si crece.",
+            "Desinformación (falsa y deliberada)": "Contranarrativa fáctica, nunca adjetiva; responder a la narrativa sin mencionar la publicación original ni al autor.",
+            "Contenido manipulado": "Documentación verificable y reporte a la plataforma.",
+        },
     },
     "Tendencia": {
         "descripcion": "Varias evidencias sobre un mismo tema revelan una necesidad creciente.",
@@ -34,10 +40,31 @@ CATEGORIAS = {
     },
     "Posible acción coordinada": {
         "descripcion": "Indicios de coordinación: textos repetidos, actividad simultánea, perfiles similares.",
-        "procedimiento": "Preservar evidencia y escalar si corresponde. Siempre sujeto a validación humana.",
+        "procedimiento": "Preservar evidencia y escalar si corresponde. Habitualmente no responder. Siempre sujeto a validación humana.",
         "responsable": "Comité de Respuesta",
     },
 }
+
+# Coordinación: solo se sugiere con AL MENOS 3 indicios técnicos de esta lista cerrada.
+# La coordinación NUNCA se infiere por ideología, consigna común, seguir a los mismos
+# dirigentes ni horario habitual de publicación. (Criterio del Protocolo RADAR v1 de
+# Prensa/Comunicación, regla D1.)
+INDICIOS_COORDINACION = [
+    "Publicación sincronizada en ventanas menores a 60 segundos entre cuentas sin relación",
+    "Repetición literal del mismo texto, incluidos errores de tipeo idénticos",
+    "Mismo recurso gráfico con idéntico archivo/hash",
+    "Cuentas creadas en un período acotado y sin actividad previa",
+    "Relación seguidores/seguidos atípica en las cuentas participantes",
+    "Ausencia de interacción nativa (solo replican, no conversan)",
+    "Secuencias de publicación idénticas entre cuentas",
+]
+
+# Reglas ante la duda (se aplican SIEMPRE, también en la clasificación automática).
+REGLAS_ANTE_DUDA = [
+    "Ante duda entre expresión legítima y otra categoría, prevalece la libertad de expresión: se registra y observa.",
+    "Ante duda sobre un posible riesgo (amenaza, datos personales expuestos), prevalece la interpretación protectora: mejor un falso positivo que un falso negativo.",
+    "La clasificación siempre puede corregirse; la corrección queda registrada.",
+]
 
 NIVELES = {
     "N1": {
@@ -100,6 +127,21 @@ def manual_como_texto() -> str:
             f"- {nombre}: {cat['descripcion']} Procedimiento: {cat['procedimiento']} "
             f"Responsable: {cat['responsable']}"
         )
+        for subtipo, tratamiento in cat.get("subtipos", {}).items():
+            lineas.append(f"    · Subtipo {subtipo}: {tratamiento}")
+    lineas.append("")
+    lineas.append(
+        "REGLA DE COORDINACIÓN: 'Posible acción coordinada' solo se propone si la evidencia "
+        "o el contexto describen AL MENOS 3 de estos indicios técnicos (nunca por ideología, "
+        "consigna común o seguir a los mismos dirigentes):"
+    )
+    for indicio in INDICIOS_COORDINACION:
+        lineas.append(f"- {indicio}")
+    lineas.append("Con menos de 3 indicios, clasificar como Crítica o Tendencia y anotar los indicios en la justificación.")
+    lineas.append("")
+    lineas.append("REGLAS ANTE LA DUDA:")
+    for regla in REGLAS_ANTE_DUDA:
+        lineas.append(f"- {regla}")
     lineas.append("")
     lineas.append("NIVELES DE CRITICIDAD (elegir exactamente uno):")
     for codigo, niv in NIVELES.items():

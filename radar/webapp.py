@@ -105,7 +105,10 @@ def _url_segura(url):
 
 templates.env.filters["url_segura"] = _url_segura
 
+# Severidad con paleta propia (no los colores de marca) y doble codificación:
+# color + ícono + texto, para que nunca dependa solo del color.
 COLORES_NIVEL = {"N1": "#64748b", "N2": "#d97706", "N3": "#ea580c", "N4": "#dc2626"}
+ICONOS_NIVEL = {"N1": "●", "N2": "◆", "N3": "▲", "N4": "■"}
 COLORES_CATEGORIA = {
     "Consulta": "#0561f5",
     "Reclamo": "#c2410c",
@@ -196,6 +199,7 @@ def _contexto_base() -> dict:
         "NIVELES": manual.NIVELES,
         "QUE_NO_HACER": manual.QUE_NO_HACER,
         "COLORES_NIVEL": COLORES_NIVEL,
+        "ICONOS_NIVEL": ICONOS_NIVEL,
         "COLORES_CATEGORIA": COLORES_CATEGORIA,
         "COLORES_ESTADO": COLORES_ESTADO,
     }

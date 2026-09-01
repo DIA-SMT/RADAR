@@ -14,7 +14,7 @@
   {% endif %}
   {% if caso.nivel %}
     <span class="badge" style="background:{{ COLORES_NIVEL[caso.nivel] }}; color:#fff; font-size:13.5px;">
-      {{ caso.nivel }} — {{ NIVELES[caso.nivel].nombre }}</span>
+      {{ ICONOS_NIVEL[caso.nivel] }} {{ caso.nivel }} — {{ NIVELES[caso.nivel].nombre }}</span>
   {% endif %}
   {% set colE = COLORES_ESTADO.get(caso.estado, '#64748b') %}
   <span class="badge" style="background:{{ colE }}1a; color:{{ colE }}; font-size:13.5px;">{{ ESTADOS.get(caso.estado, caso.estado) }}</span>
