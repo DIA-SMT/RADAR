@@ -32,7 +32,14 @@ from . import classifier, config, db, manual
 
 log = logging.getLogger("radar.bot")
 
-TEXTO, PLATAFORMA, LINK, CONTEXTO, PROPUESTA, ELEGIR_CAT, ELEGIR_NIVEL = range(7)
+TEXTO, PLATAFORMA, LINK, CONTEXTO, PROPUESTA, ELEGIR_CAT, ELEGIR_NIVEL, INFO_EXTRA = range(8)
+
+# Mensajes que no son evidencia: no tiene sentido arrancar una carga con esto.
+_SALUDOS = {
+    "hola", "holaa", "buenas", "buen dia", "buenas tardes", "buenas noches",
+    "gracias", "ok", "dale", "listo", "si", "no", "hey", "que tal", "como andas",
+    "que onda", "probando", "test", "hola bot",
+}
 
 _CATEGORIAS = list(manual.CATEGORIAS.keys())
 
@@ -103,16 +110,17 @@ def _kb_omitir(clave):
     return InlineKeyboardMarkup([[InlineKeyboardButton("Omitir ⏭", callback_data=f"skip:{clave}")]])
 
 
-def _kb_propuesta():
-    return InlineKeyboardMarkup(
+def _kb_propuesta(con_agregar: bool = False):
+    filas = [[InlineKeyboardButton("✅ Subir al panel", callback_data="conf:si")]]
+    if con_agregar:
+        filas.append([InlineKeyboardButton("➕ Agregar info", callback_data="conf:mas")])
+    filas.append(
         [
-            [InlineKeyboardButton("✅ Subir al panel", callback_data="conf:si")],
-            [
-                InlineKeyboardButton("✏️ Corregir", callback_data="conf:no"),
-                InlineKeyboardButton("🗑 Descartar", callback_data="conf:desc"),
-            ],
+            InlineKeyboardButton("✏️ Corregir", callback_data="conf:no"),
+            InlineKeyboardButton("🗑 Descartar", callback_data="conf:desc"),
         ]
     )
+    return InlineKeyboardMarkup(filas)
 
 
 # ---------- helpers ----------
@@ -199,6 +207,15 @@ def _texto_propuesta(cls: dict) -> str:
     lineas.append(f"• Acción recomendada: {cls['accion_recomendada']}")
     if cls.get("justificacion"):
         lineas.append(f"• Por qué: {cls['justificacion']}")
+    if cls.get("confianza") == "baja":
+        lineas.append("")
+        lineas.append("⚠️ El análisis tiene poca información para trabajar: revisalo bien antes de subirlo.")
+    if cls.get("faltantes"):
+        lineas.append("")
+        lineas.append("Para afinar el análisis me ayudaría saber:")
+        for pedido in cls["faltantes"]:
+            lineas.append(f"– {pedido}")
+        lineas.append("(tocá ➕ Agregar info y contámelo)")
     lineas.append("")
     lineas.append("¿Lo subo al panel?")
     return "\n".join(lineas)
@@ -317,6 +334,13 @@ async def recibir_texto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     context.user_data.clear()
     caso = _caso_nuevo(update)
     contenido = update.message.text.strip()
+    saludo = contenido.lower().strip(" !¡¿?.,\U0001f44b")
+    if saludo in _SALUDOS or len(saludo) <= 3:
+        await update.message.reply_text(
+            "¡Hola! Para cargar un caso mandame la evidencia: una captura de pantalla, "
+            "un link o el texto del comentario que viste en redes. (/start para ver la ayuda)"
+        )
+        return ConversationHandler.END
     if contenido.lower().startswith(("http://", "https://")):
         caso["url"] = contenido
         plataforma = _plataforma_de_url(contenido)
@@ -342,8 +366,7 @@ async def recibir_foto(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
     return await _guardar_foto(update, context, primera=True)
 
 
-async def _guardar_foto(update: Update, context: ContextTypes.DEFAULT_TYPE, primera: bool) -> int:
-    caso = context.user_data["caso"]
+async def _descargar_captura(update: Update, caso: dict) -> None:
     foto = update.message.photo[-1]
     archivo = await foto.get_file()
     # Nombre único por carga (no por imagen): así descartar esta carga nunca borra
@@ -357,6 +380,11 @@ async def _guardar_foto(update: Update, context: ContextTypes.DEFAULT_TYPE, prim
         except Exception:
             pass
     caso["captura_path"] = nombre
+
+
+async def _guardar_foto(update: Update, context: ContextTypes.DEFAULT_TYPE, primera: bool) -> int:
+    caso = context.user_data["caso"]
+    await _descargar_captura(update, caso)
     if update.message.caption and not caso.get("texto"):
         caso["texto"] = update.message.caption.strip()
     if caso.get("texto"):
@@ -420,7 +448,8 @@ async def _analizar(mensaje, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if cls:
         context.user_data["cls"] = cls
-        await mensaje.reply_text(_texto_propuesta(cls), reply_markup=_kb_propuesta())
+        con_agregar = bool(cls.get("faltantes")) or cls.get("confianza") == "baja"
+        await mensaje.reply_text(_texto_propuesta(cls), reply_markup=_kb_propuesta(con_agregar))
         return PROPUESTA
 
     context.user_data["cls"] = None
@@ -435,12 +464,24 @@ async def propuesta_respondida(update: Update, context: ContextTypes.DEFAULT_TYP
     query = update.callback_query
     await _ack(query)
     await _quitar_teclado(update)
+    if query.data == "conf:mas":
+        cls = context.user_data.get("cls") or {}
+        pedidos = "\n".join(f"– {p}" for p in cls.get("faltantes", [])) or "– lo que le sume contexto al caso"
+        await query.message.reply_text(
+            "Dale, contame (texto o captura):\n" + pedidos
+        )
+        return INFO_EXTRA
     if query.data == "conf:si":
         cls = context.user_data.get("cls")
         if not cls or not context.user_data.get("caso"):
             # Doble tap o carga ya procesada: no insertar de nuevo.
             await query.message.reply_text("Esa carga ya se procesó. Mandame otra evidencia cuando quieras.")
             return ConversationHandler.END
+        if cls.get("faltantes"):
+            # Subió igual: lo pendiente queda visible para el comité en el análisis.
+            pendiente = "Información pendiente: " + "; ".join(cls["faltantes"])
+            base = (cls.get("justificacion") or "").rstrip(".")
+            cls = {**cls, "justificacion": f"{base}. {pendiente}" if base else pendiente}
         caso_id = _guardar_caso(context, cls, origen="ia_confirmada")
         # Limpiar ANTES de responder: si la respuesta falla, el timeout no debe
         # borrar la captura de un caso que ya está en la base.
@@ -506,6 +547,21 @@ async def nivel_elegido(update: Update, context: ContextTypes.DEFAULT_TYPE) -> i
     return ConversationHandler.END
 
 
+async def recibir_info_extra(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Sumó contexto tras el pedido de 'faltantes': se re-analiza con la info nueva."""
+    caso = context.user_data["caso"]
+    caso["relevancia"] = f"{caso.get('relevancia') or ''}\n{update.message.text.strip()}".strip()
+    return await _analizar(update.message, context)
+
+
+async def foto_info_extra(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    caso = context.user_data["caso"]
+    await _descargar_captura(update, caso)
+    if update.message.caption:
+        caso["relevancia"] = f"{caso.get('relevancia') or ''}\n{update.message.caption.strip()}".strip()
+    return await _analizar(update.message, context)
+
+
 async def usar_botones(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """El funcionario escribió texto donde se esperaba un botón."""
     await update.message.reply_text("Usá los botones del mensaje de arriba 🙂 (o /cancelar).")
@@ -560,9 +616,13 @@ def build_application() -> Application:
                 MessageHandler(_FOTO_NUEVA, foto_extra),
             ],
             PROPUESTA: [
-                CallbackQueryHandler(propuesta_respondida, pattern=r"^conf:(si|no|desc)$"),
+                CallbackQueryHandler(propuesta_respondida, pattern=r"^conf:(si|no|desc|mas)$"),
                 MessageHandler(_TEXTO_NUEVO, usar_botones),
                 MessageHandler(_FOTO_NUEVA, foto_extra),
+            ],
+            INFO_EXTRA: [
+                MessageHandler(_TEXTO_NUEVO, recibir_info_extra),
+                MessageHandler(_FOTO_NUEVA, foto_info_extra),
             ],
             ELEGIR_CAT: [
                 CallbackQueryHandler(categoria_elegida, pattern=r"^cat:\d+$"),

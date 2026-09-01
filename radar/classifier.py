@@ -35,9 +35,24 @@ gestión. No adjetives políticamente. Si el reclamo del vecino es correcto, dec
 justificación: corregir el problema real es mejor comunicación que cualquier respuesta.
 La opción de no responder es siempre un curso de acción válido a considerar.
 
+Enfoque: primero identificá QUÉ ES realmente, después clasificá. No fuerces la categoría:
+- "Reclamo" SOLO si hay un problema concreto y gestionable: algo que un área municipal puede
+  ir a arreglar o resolver (un bache, una luminaria, un turno que no funciona).
+- Malestar u opinión negativa sin hecho gestionable → "Crítica", aunque suene a queja.
+- Una pregunta → "Consulta", aunque tenga tono de enojo.
+- Si el material no alcanza para saber qué es (texto trivial, saludo, fragmento sin contexto),
+  decilo con confianza "baja" y pedí lo que falta: no inventes una categoría.
+- No infles el nivel: lo cotidiano es N1; N2 exige repetición o crecimiento real presente en la
+  evidencia o el contexto, no supuesto.
+
 Reglas de salida:
 - Respondé ÚNICAMENTE con un objeto JSON, sin texto adicional ni bloques de código.
-- Claves exactas: "resumen", "categoria", "nivel", "tema", "ubicacion", "area", "accion_recomendada", "justificacion".
+- Claves exactas: "resumen", "categoria", "nivel", "tema", "ubicacion", "area", "accion_recomendada", "justificacion", "confianza", "faltantes".
+- "confianza": "alta", "media" o "baja" — qué tan sólida es la clasificación con la información disponible.
+- "faltantes": lista (máximo 3, puede ser vacía) de datos concretos que mejorarían el análisis,
+  redactados como pedido directo al funcionario (ej.: "la ubicación exacta del problema",
+  "una captura o link de la publicación", "si otros vecinos comentan lo mismo").
+  No pidas lo que ya está en la evidencia o el contexto.
 - "resumen": 1 a 3 frases en tono institucional que cuenten QUÉ está pasando: qué dice el vecino,
   sobre qué tema, dónde, y qué intención tiene (reclamar, preguntar, criticar, difundir algo).
   Es lo primero que lee el comité en el panel: concreto y sin opinar. Texto plano.
@@ -111,7 +126,20 @@ def _validar(datos: dict) -> Optional[dict]:
     if ubicacion and _quitar_acentos(ubicacion) in ("null", "none", "no hay", "sin ubicacion"):
         ubicacion = None
 
+    confianza = (_texto_plano(datos.get("confianza")) or "").lower()
+    if confianza not in ("alta", "media", "baja"):
+        confianza = "media"
+
+    faltantes = []
+    if isinstance(datos.get("faltantes"), list):
+        for pedido in datos["faltantes"][:3]:
+            texto = _texto_plano(pedido)
+            if texto:
+                faltantes.append(texto)
+
     return {
+        "confianza": confianza,
+        "faltantes": faltantes,
         "resumen": _texto_plano(datos.get("resumen")),
         "categoria": categoria,
         "nivel": _nivel_normalizado(datos.get("nivel")),
