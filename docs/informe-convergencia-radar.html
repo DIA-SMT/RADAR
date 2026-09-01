@@ -1,0 +1,356 @@
+<title>Convergencia RADAR</title>
+<style>
+  :root {
+    --fondo: #f4f7fb;
+    --papel: #ffffff;
+    --tinta: #22303f;
+    --gris: #5b6b7d;
+    --azul: #0066ff;
+    --celeste: #2eb1ff;
+    --amarillo: #f4dc00;
+    --borde: #dce6f1;
+    --verde: #177a4b;
+    --verde-fondo: #e8f5ee;
+    --azul-fondo: #eaf2ff;
+    --gris-fondo: #eef1f5;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fondo: #0d1420;
+      --papel: #161f2d;
+      --tinta: #e7edf5;
+      --gris: #9aa9bb;
+      --azul: #5a9bff;
+      --celeste: #2eb1ff;
+      --amarillo: #e8d200;
+      --borde: #26344a;
+      --verde: #52c88a;
+      --verde-fondo: #142e20;
+      --azul-fondo: #17273f;
+      --gris-fondo: #1c2836;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fondo: #0d1420;
+    --papel: #161f2d;
+    --tinta: #e7edf5;
+    --gris: #9aa9bb;
+    --azul: #5a9bff;
+    --celeste: #2eb1ff;
+    --amarillo: #e8d200;
+    --borde: #26344a;
+    --verde: #52c88a;
+    --verde-fondo: #142e20;
+    --azul-fondo: #17273f;
+    --gris-fondo: #1c2836;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Poppins", "Segoe UI", system-ui, sans-serif;
+    background: var(--fondo);
+    color: var(--tinta);
+    font-size: 15px;
+    line-height: 1.65;
+    padding: 0 20px 80px;
+  }
+  .hoja { max-width: 760px; margin: 0 auto; }
+
+  header.doc {
+    padding: 44px 0 26px;
+    border-bottom: 1px solid var(--borde);
+    margin-bottom: 36px;
+  }
+  .membrete {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--gris); font-weight: 500; margin-bottom: 26px;
+  }
+  h1 {
+    font-size: 33px; font-weight: 700; line-height: 1.2; letter-spacing: -.01em;
+    text-wrap: balance; margin-bottom: 14px;
+  }
+  h1 .radar { color: var(--azul); }
+  .bajada { color: var(--gris); font-size: 16px; max-width: 58ch; text-wrap: balance; }
+
+  section { margin-bottom: 44px; }
+  h2 {
+    font-size: 19px; font-weight: 600; margin-bottom: 6px;
+    display: inline-block;
+    box-shadow: inset 0 -10px 0 0 color-mix(in srgb, var(--amarillo) 55%, transparent);
+    padding: 0 2px;
+  }
+  .num { color: var(--azul); font-weight: 700; margin-right: 6px; }
+  h2 + p.intro { color: var(--gris); margin: 10px 0 18px; max-width: 62ch; }
+
+  .chip {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 2px 10px; border-radius: 999px; white-space: nowrap;
+  }
+  .chip.prod { background: var(--verde-fondo); color: var(--verde); }
+  .chip.decidir { background: var(--azul-fondo); color: var(--azul); }
+  .chip.fuera { background: var(--gris-fondo); color: var(--gris); }
+
+  .item {
+    background: var(--papel); border: 1px solid var(--borde); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 12px;
+  }
+  .item h3 {
+    font-size: 15px; font-weight: 600; margin-bottom: 6px;
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .item p { color: var(--tinta); max-width: 68ch; }
+  .item p + p { margin-top: 8px; }
+  .item .pide {
+    margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--borde);
+    font-size: 13.5px; color: var(--gris);
+  }
+  .item .pide strong { color: var(--azul); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--papel); border: 1px solid var(--borde); border-radius: 10px; overflow: hidden; font-size: 14px; }
+  .tabla-scroll { overflow-x: auto; margin: 16px 0; }
+  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--gris); padding: 10px 14px; border-bottom: 2px solid var(--borde); font-weight: 600; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--borde); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { color: var(--gris); font-size: 13px; white-space: nowrap; }
+
+  ul.lista { padding-left: 20px; max-width: 68ch; }
+  ul.lista li { margin-bottom: 8px; }
+  ul.lista li::marker { color: var(--celeste); }
+
+  .cita {
+    border-left: 3px solid var(--celeste); padding: 4px 0 4px 16px;
+    color: var(--gris); font-size: 14px; margin: 14px 0; max-width: 62ch;
+  }
+
+  footer.doc {
+    border-top: 1px solid var(--borde); padding-top: 18px; margin-top: 56px;
+    font-size: 12.5px; color: var(--gris); display: flex; justify-content: space-between;
+    gap: 12px; flex-wrap: wrap;
+  }
+  strong { font-weight: 600; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; background: var(--gris-fondo); padding: 1px 6px; border-radius: 5px; }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<div class="hoja">
+<header class="doc">
+  <div class="membrete">
+    <span>Secretaría General · Dirección de IA</span>
+    <span>S. M. de Tucumán · Septiembre 2026</span>
+  </div>
+  <h1>Convergencia de los dos <span class="radar">RADAR</span></h1>
+  <p class="bajada">
+    Análisis del Protocolo RADAR v1 de Prensa y Comunicación, qué criterios ya se
+    incorporaron al sistema de escucha ciudadana, y qué decisiones quedan en manos del comité.
+  </p>
+</header>
+
+<section>
+  <h2><span class="num">1</span>Dos sistemas hermanos, un mismo nombre</h2>
+  <p class="intro">
+    En la Municipalidad conviven hoy dos proyectos llamados RADAR. No compiten: miran el mismo
+    territorio digital desde dos lados distintos, y este informe propone que se alimenten mutuamente.
+  </p>
+  <div class="tabla-scroll">
+  <table>
+    <tr><th></th><th>RADAR · Escucha ciudadana (este sistema)</th><th>RADAR · Defensa institucional (Prensa)</th></tr>
+    <tr><td>Misión</td><td>Escuchar al vecino: reclamos, consultas, tendencias en redes</td><td>Defender a la institución: desinformación, campañas coordinadas, hostigamiento</td></tr>
+    <tr><td>Área</td><td>Secretaría General</td><td>Subsecretaría de Prensa y Comunicación</td></tr>
+    <tr><td>Estado</td><td>En producción: bot + clasificación IA + panel del comité</td><td>Protocolo operativo maduro y detallado; desarrollo de software inicial</td></tr>
+    <tr><td>Fortaleza</td><td>Implementación funcionando de punta a punta</td><td>Doctrina escrita: criterios, umbrales, taxonomía y análisis legal</td></tr>
+  </table>
+  </div>
+  <p>
+    La conclusión del análisis es directa: <strong>su protocolo es el mejor insumo disponible para
+    nuestro Manual de Actuación</strong>, y nuestra plataforma en funcionamiento puede ser, a la
+    inversa, la base técnica que su proyecto todavía no construyó.
+  </p>
+</section>
+
+<section>
+  <h2><span class="num">2</span>Criterios ya incorporados</h2>
+  <p class="intro">
+    Estos puntos del Protocolo de Prensa se adoptaron y ya operan en el sistema de escucha.
+    No requieren decisión: se informan.
+  </p>
+
+  <div class="item">
+    <h3>Regla de coordinación con indicios técnicos <span class="chip prod">En producción</span></h3>
+    <p>
+      El sistema solo propone la categoría «Posible acción coordinada» cuando la evidencia presenta
+      <strong>al menos 3 indicios técnicos</strong> de una lista cerrada de 7 (textos idénticos con
+      los mismos errores de tipeo, publicación sincronizada en menos de 60 segundos, cuentas recién
+      creadas sin actividad previa, entre otros). La coordinación <strong>nunca se infiere por ideología,
+      consigna común ni por seguir a los mismos dirigentes</strong>. Esta regla protege al sistema de
+      cualquier lectura de persecución política.
+    </p>
+  </div>
+
+  <div class="item">
+    <h3>Subtipos de información incorrecta <span class="chip prod">En producción</span></h3>
+    <p>
+      La categoría «Información incorrecta» distingue ahora error de dato, rumor, desinformación
+      deliberada y contenido manipulado, cada uno con su tratamiento (corrección informativa,
+      monitoreo, contranarrativa fáctica, reporte a plataforma). La contranarrativa responde a la
+      narrativa ante terceros, sin mencionar la publicación original ni a su autor.
+    </p>
+  </div>
+
+  <div class="item">
+    <h3>Reglas ante la duda <span class="chip prod">En producción</span></h3>
+    <p>
+      Ante duda entre expresión legítima y otra categoría, <strong>prevalece la libertad de
+      expresión</strong> (se registra y observa). Ante duda sobre un riesgo, prevalece la
+      interpretación protectora. Ambas reglas rigen también para la clasificación automática.
+    </p>
+  </div>
+
+  <div class="item">
+    <h3>Neutralidad del análisis automático <span class="chip prod">En producción</span></h3>
+    <p>
+      El motor de análisis tiene instrucción expresa de neutralidad: el análisis debe ser idéntico
+      sea el emisor afín u opositor, sin adjetivación política, y con una consigna que vale citar:
+    </p>
+    <p class="cita">Si el reclamo del vecino es correcto, hay que decirlo: corregir el problema real
+    es mejor comunicación que cualquier respuesta.</p>
+  </div>
+
+  <div class="item">
+    <h3>Resguardos de datos personales en el uso de IA <span class="chip prod">En producción</span></h3>
+    <p>
+      Antes de enviar texto al proveedor de IA se eliminan teléfonos y correos electrónicos, se
+      exige por contrato técnico que ningún proveedor retenga datos para entrenamiento
+      (<code>data_collection: deny</code>) y se registra cada llamada (modelo y volumen). Es la
+      primera capa de cumplimiento de la Ley 25.326; el punto 3 propone completarla.
+    </p>
+  </div>
+
+  <div class="item">
+    <h3>Identidad visual oficial <span class="chip prod">En producción</span></h3>
+    <p>
+      El panel aplica el Manual de Marca SMT: tipografía Poppins y paleta institucional
+      (azul <code>#0066ff</code>, celeste <code>#2eb1ff</code>, amarillo <code>#f4dc00</code>).
+      Siguiendo el criterio de Prensa, los colores de marca no se usan como semáforo de gravedad:
+      la severidad tiene paleta propia con doble codificación (color + ícono + texto), legible
+      también para personas con daltonismo.
+    </p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">3</span>Decisiones que se piden al comité</h2>
+  <p class="intro">
+    Estos puntos exceden lo técnico: son definiciones institucionales. Se presentan con la
+    recomendación de la Dirección de IA, pero la decisión es del comité.
+  </p>
+
+  <div class="item">
+    <h3>Dictamen jurídico sobre el uso de IA <span class="chip decidir">A decisión</span></h3>
+    <p>
+      El análisis legal de Prensa señala que enviar contenido de redes a proveedores de IA en el
+      exterior constituye <strong>transferencia internacional de datos personales</strong>
+      (Ley 25.326, arts. 11 y 12). No impide operar, pero recomienda un dictamen escrito de la
+      Asesoría Letrada sobre el circuito de resguardo, y desarrollar y demostrar con
+      <strong>casos ficcionalizados</strong> hasta tenerlo.
+    </p>
+    <p class="pide"><strong>Se pide:</strong> elevar la consulta a la Asesoría Letrada, idealmente
+    unificada para los dos RADAR, que usan el mismo proveedor.</p>
+  </div>
+
+  <div class="item">
+    <h3>Las trece preguntas antes de responder <span class="chip decidir">A decisión</span></h3>
+    <p>
+      El protocolo de Prensa exige responder por escrito trece preguntas antes de habilitar
+      cualquier respuesta pública (objetivo, destinatario real, riesgo de amplificar, credibilidad
+      del vocero, momento, tono, canal, medición). Dos cortes son automáticos: sin objetivo claro
+      no se responde; sin información verificable, se espera.
+    </p>
+    <p class="pide"><strong>Se pide:</strong> adoptarlas como requisito del Manual de Actuación
+    para toda respuesta pública originada en un caso del sistema.</p>
+  </div>
+
+  <div class="item">
+    <h3>Registrar también los «no hacer nada» <span class="chip decidir">A decisión</span></h3>
+    <p>
+      Toda evaluación del comité deja acta, aunque la decisión sea no actuar: qué se vio, qué se
+      decidió, con qué fundamento y cuándo se revisa. La diferencia entre «nadie hizo nada» y
+      «se decidió no responder, con fundamento auditable» es la que protege a los funcionarios.
+      El panel ya tiene el lugar para asentarlo (sección Resolución de cada caso).
+    </p>
+    <p class="pide"><strong>Se pide:</strong> adoptarlo como práctica obligatoria del comité.</p>
+  </div>
+
+  <div class="item">
+    <h3>Notificaciones con acuse para N3/N4 <span class="chip decidir">A decisión</span></h3>
+    <p>
+      Para la próxima etapa del sistema se propone adoptar el diseño de Prensa: cuando un caso
+      llega a nivel Alerta o Crisis, el sistema notifica al responsable con botón de
+      <strong>acuse de recibo</strong>; si nadie acusa en el plazo definido, escala automáticamente
+      al siguiente rol; si la cadena se agota, el incumplimiento queda registrado. El sistema no
+      garantiza que alguien responda, pero garantiza que quede registrado si nadie lo hizo.
+    </p>
+    <p class="pide"><strong>Se pide:</strong> validar los roles y plazos de la cadena de aviso
+    (quién recibe primero, cuántos minutos, a quién escala) para poder construirla.</p>
+  </div>
+
+  <div class="item">
+    <h3>Preparar la escucha activa desde ahora <span class="chip decidir">A decisión</span></h3>
+    <p>
+      Dos acciones de bajo costo dejan lista la etapa de monitoreo de redes: (a) gestionar un
+      acceso de <strong>solo lectura</strong> al Business Manager municipal — los comentarios en las
+      publicaciones propias son la fuente de mayor rendimiento y no requieren desarrollo — y
+      (b) iniciar la <strong>línea de base de 30 días</strong> del volumen normal de conversación,
+      que es el insumo más lento de conseguir para calibrar umbrales.
+    </p>
+    <p class="pide"><strong>Se pide:</strong> autorizar la gestión del acceso y el inicio de la medición.</p>
+  </div>
+
+  <div class="item">
+    <h3>Derivación entre los dos RADAR <span class="chip decidir">A decisión</span></h3>
+    <p>
+      Definir el circuito de cruce: si la escucha ciudadana detecta una amenaza, exposición de
+      datos personales o una campaña dirigida a una persona, el caso se deriva al protocolo de
+      Prensa; si el equipo de Prensa identifica un reclamo ciudadano genuino, lo deriva a este
+      sistema. Un acuerdo de una página entre las dos áreas alcanza para empezar.
+    </p>
+    <p class="pide"><strong>Se pide:</strong> convocar a una reunión conjunta con Prensa y
+    Comunicación para acordar la derivación mutua.</p>
+  </div>
+</section>
+
+<section>
+  <h2><span class="num">4</span>Qué no se adopta</h2>
+  <p class="intro">Partes del protocolo de Prensa que pertenecen a su dominio y no al nuestro.</p>
+  <ul class="lista">
+    <li><strong>Protección de personas:</strong> canales reservados con la persona afectada, botón de
+      asistencia, resguardo físico. Es doctrina de hostigamiento, no de escucha ciudadana
+      <span class="chip fuera">Fuera de alcance</span></li>
+    <li><strong>Categorías de ataque a personas y ciberataques:</strong> amenazas, doxxing, cuentas
+      comprometidas. Si aparecen en la escucha, se derivan (punto 3.6), no se gestionan acá
+      <span class="chip fuera">Fuera de alcance</span></li>
+    <li><strong>Guardias 24/7 con acuse en minutos:</strong> los reclamos y tendencias vecinales
+      operan en escala de horas; se adopta el mecanismo de acuse, no esa exigencia horaria
+      <span class="chip fuera">Fuera de alcance</span></li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">5</span>Síntesis</h2>
+  <p>
+    El sistema de escucha ciudadana ya incorporó, en producción, los criterios del Protocolo de
+    Prensa que endurecen la clasificación (coordinación solo con indicios técnicos), afinan el
+    tratamiento de la información incorrecta y agregan resguardos de datos personales. Quedan a
+    decisión del comité seis puntos: el dictamen jurídico, las trece preguntas, el registro de las
+    no-decisiones, la cadena de avisos con acuse, la preparación de la escucha activa y la
+    derivación entre las dos áreas. Ninguno requiere presupuesto; todos requieren definición.
+  </p>
+</section>
+
+<footer class="doc">
+  <span>Elaborado por la Dirección de IA sobre el Protocolo RADAR v1, la especificación E3.0 y el Manual de Marca SMT (jun. 2025).</span>
+  <span>RADAR · Escucha activa del vecino</span>
+</footer>
+</div>
