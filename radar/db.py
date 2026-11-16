@@ -256,7 +256,9 @@ def ultimos_casos(limite: int = 5) -> list:
 
 def contar() -> dict:
     with get_conn() as conn:
-        total = list(conn.execute("SELECT COUNT(*) AS n FROM casos").fetchone())[0]
+        # fetchone()["n"] funciona en los dos backends; list(fila)[0] en Postgres
+        # (dict_row) devolvía la CLAVE 'n' en lugar del número.
+        total = conn.execute("SELECT COUNT(*) AS n FROM casos").fetchone()["n"]
         por_nivel = {
             fila["nivel"]: fila["n"]
             for fila in conn.execute(
