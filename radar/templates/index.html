@@ -3,13 +3,17 @@
 {% block contenido %}
 
 <div class="chips">
-  <span class="chip">Total: <b>{{ conteo.total }}</b></span>
+  <a class="chip" href="/">Total: <b>{{ conteo.total }}</b></a>
   {% for codigo, niv in NIVELES.items() %}
-    <span class="chip" style="border-color: {{ COLORES_NIVEL[codigo] }}55;">
+    <a class="chip" href="/?nivel={{ codigo }}" style="border-color: {{ COLORES_NIVEL[codigo] }}55;{% if filtros.nivel == codigo %} background: {{ COLORES_NIVEL[codigo] }}14;{% endif %}">
       <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ ICONOS_NIVEL[codigo] }}</span>
       {{ niv.urgencia }}: <b>{{ conteo.por_nivel.get(codigo, 0) }}</b>
-    </span>
+    </a>
   {% endfor %}
+  <a class="chip" href="/?pendientes=1"
+     style="{% if filtros.pendientes %}background: var(--azul-fondo, #eaf2ff); {% endif %}border-color: var(--azul); color: var(--azul); font-weight:600;">
+    Sin decisión: <b>{{ conteo.sin_decision }}</b>
+  </a>
 </div>
 
 <div class="card">
@@ -38,9 +42,9 @@
   </form>
 </div>
 
-<div class="card" style="padding: 8px 12px;">
+<div class="card" style="padding: 8px 12px; overflow-x: auto;">
 {% if casos %}
-  <table>
+  <table style="min-width: 760px;">
     <thead>
       <tr>
         <th style="width:52px;">#</th>
@@ -56,7 +60,12 @@
     {% for c in casos %}
       <tr class="fila" onclick="location.href='/caso/{{ c.id }}'">
         <td><b>{{ c.id }}</b></td>
-        <td class="muted">{{ c.creado_en | fecha }}</td>
+        <td class="muted">{{ c.creado_en | fecha }}
+          <div style="font-size:12px;">{{ c.edad }}</div>
+          {% if c.vencido %}
+            <span class="badge" style="background:#dc26261a; color:#dc2626; white-space:nowrap;">⏰ fuera de plazo</span>
+          {% endif %}
+        </td>
         <td>
           {% if c.resumen %}{{ c.resumen | truncate(110) }}{% else %}«{{ c.texto | truncate(95) }}»{% endif %}
           <div class="muted">

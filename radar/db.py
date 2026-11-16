@@ -30,9 +30,12 @@ except Exception:  # sin base de zonas horarias: se usa la hora local del servid
     _TZ = None
 
 
+def ahora_dt() -> datetime:
+    return datetime.now(_TZ) if _TZ else datetime.now()
+
+
 def ahora() -> str:
-    momento = datetime.now(_TZ) if _TZ else datetime.now()
-    return momento.strftime("%Y-%m-%d %H:%M:%S")
+    return ahora_dt().strftime("%Y-%m-%d %H:%M:%S")
 
 
 ESTADOS = {
@@ -215,14 +218,26 @@ def obtener_caso(caso_id: int):
         return conn.execute(_q("SELECT * FROM casos WHERE id = ?"), (caso_id,)).fetchone()
 
 
+# Casos abiertos primero (por urgencia, N4 arriba), resueltos/cerrados al fondo.
+_ORDEN_TRIAJE = """ORDER BY
+    (CASE WHEN estado IN ('resuelto', 'cerrado') THEN 1 ELSE 0 END),
+    (CASE nivel WHEN 'N4' THEN 0 WHEN 'N3' THEN 1 WHEN 'N2' THEN 2 WHEN 'N1' THEN 3 ELSE 4 END),
+    id DESC"""
+
+_SIN_DECISION = "((decision IS NULL OR decision = '') AND estado NOT IN ('resuelto', 'cerrado'))"
+
+
 def listar_casos(
     categoria: Optional[str] = None,
     nivel: Optional[str] = None,
     estado: Optional[str] = None,
     q: Optional[str] = None,
+    pendientes: bool = False,
     limite: int = 200,
 ) -> list:
     condiciones, params = [], []
+    if pendientes:
+        condiciones.append(_SIN_DECISION)
     if categoria:
         condiciones.append("categoria = ?")
         params.append(categoria)
@@ -243,7 +258,7 @@ def listar_casos(
     where = ("WHERE " + " AND ".join(condiciones)) if condiciones else ""
     with get_conn() as conn:
         return conn.execute(
-            _q(f"SELECT * FROM casos {where} ORDER BY id DESC LIMIT ?"), (*params, limite)
+            _q(f"SELECT * FROM casos {where} {_ORDEN_TRIAJE} LIMIT ?"), (*params, limite)
         ).fetchall()
 
 
@@ -271,7 +286,15 @@ def contar() -> dict:
                 "SELECT estado, COUNT(*) AS n FROM casos GROUP BY estado"
             ).fetchall()
         }
-    return {"total": total, "por_nivel": por_nivel, "por_estado": por_estado}
+        sin_decision = conn.execute(
+            f"SELECT COUNT(*) AS n FROM casos WHERE {_SIN_DECISION}"
+        ).fetchone()["n"]
+    return {
+        "total": total,
+        "por_nivel": por_nivel,
+        "por_estado": por_estado,
+        "sin_decision": sin_decision,
+    }
 
 
 def cambiar_estado(caso_id: int, estado: str) -> None:

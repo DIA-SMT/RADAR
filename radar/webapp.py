@@ -15,6 +15,7 @@ import hmac
 import logging
 import secrets
 import time
+from datetime import datetime
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -210,6 +211,32 @@ def _nombre_de(usuario: str) -> str:
     return usuario.split("@")[0] if "@" in usuario else ""
 
 
+# Plazos del Manual de Actuación por urgencia (horas). "Sin demora" se chequea a la hora.
+_PLAZOS_HORAS = {"N2": 24, "N3": 4, "N4": 1}
+_ESTADOS_CERRADOS = ("resuelto", "cerrado")
+
+
+def _con_edad_y_plazo(caso) -> dict:
+    """Suma al caso cuánto hace que espera y si venció el plazo del manual."""
+    dato = dict(caso)
+    dato["edad"], dato["vencido"] = "", False
+    try:
+        creado = datetime.strptime(str(dato["creado_en"])[:19], "%Y-%m-%d %H:%M:%S")
+        horas = (db.ahora_dt().replace(tzinfo=None) - creado).total_seconds() / 3600
+        if horas < 1:
+            dato["edad"] = f"hace {max(1, int(horas * 60))} min"
+        elif horas < 48:
+            dato["edad"] = f"hace {int(horas)} h"
+        else:
+            dato["edad"] = f"hace {int(horas // 24)} d"
+        plazo = _PLAZOS_HORAS.get(dato.get("nivel") or "")
+        if plazo and dato.get("estado") not in _ESTADOS_CERRADOS and horas > plazo:
+            dato["vencido"] = True
+    except Exception:  # una fecha rara no debe romper el listado
+        pass
+    return dato
+
+
 @app.get("/login")
 def login_form(request: Request):
     if not login_supabase_activo() or _leer_sesion(request.cookies.get(_COOKIE_SESION, "")):
@@ -268,17 +295,23 @@ def index(
     nivel: str = "",
     estado: str = "",
     q: str = "",
+    pendientes: str = "",
     usuario: str = Depends(usuario_actual),
 ):
     casos = db.listar_casos(
-        categoria=categoria or None, nivel=nivel or None, estado=estado or None, q=q or None
+        categoria=categoria or None,
+        nivel=nivel or None,
+        estado=estado or None,
+        q=q or None,
+        pendientes=bool(pendientes),
     )
     contexto = _contexto_base() | {
         "request": request,
-        "casos": casos,
+        "casos": [_con_edad_y_plazo(c) for c in casos],
         "conteo": db.contar(),
-        "filtros": {"categoria": categoria, "nivel": nivel, "estado": estado, "q": q},
-        "hay_filtros": bool(categoria or nivel or estado or q),
+        "filtros": {"categoria": categoria, "nivel": nivel, "estado": estado, "q": q,
+                    "pendientes": pendientes},
+        "hay_filtros": bool(categoria or nivel or estado or q or pendientes),
         "usuario": usuario,
     }
     return templates.TemplateResponse(request, "index.html", contexto)
