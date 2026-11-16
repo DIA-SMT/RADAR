@@ -1,0 +1,12 @@
+# Chequeo puntual de salud de RADAR (lo dispara radar-health.timer).
+#   sudo cp deploy/radar-health.* /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now radar-health.timer
+
+[Unit]
+Description=Healthcheck de RADAR (aviso por Telegram si está caído)
+
+[Service]
+Type=oneshot
+User=radar
+WorkingDirectory=/opt/radar
+ExecStart=/opt/radar/.venv/bin/python /opt/radar/healthcheck.py
