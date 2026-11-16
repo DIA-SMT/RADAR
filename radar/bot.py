@@ -126,10 +126,16 @@ def _kb_propuesta(con_agregar: bool = False):
 # ---------- helpers ----------
 
 def _autorizado(update: Update) -> bool:
-    if not config.TELEGRAM_ALLOWED_IDS:
+    # Sin ninguna lista configurada, el bot queda abierto (modo piloto inicial).
+    if not config.TELEGRAM_ALLOWED_IDS and not config.TELEGRAM_ALLOWED_USERS:
         return True
     usuario = update.effective_user
-    return usuario is not None and usuario.id in config.TELEGRAM_ALLOWED_IDS
+    if usuario is None:
+        return False
+    if usuario.id in config.TELEGRAM_ALLOWED_IDS:
+        return True
+    username = (usuario.username or "").lower()
+    return bool(username) and username in config.TELEGRAM_ALLOWED_USERS
 
 
 async def _rechazar(update: Update) -> int:

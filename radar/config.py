@@ -69,8 +69,15 @@ SESSION_SECRET = (os.getenv("SESSION_SECRET") or "").strip()
 # Zona horaria para los timestamps de los casos.
 RADAR_TZ = os.getenv("RADAR_TZ", "America/Argentina/Tucuman").strip()
 
+def _usernames_telegram() -> set:
+    """Usernames habilitados (sin @, insensible a mayúsculas)."""
+    crudo = (os.getenv("TELEGRAM_ALLOWED_USERS") or "").replace(";", ",").replace(" ", ",")
+    return {parte.strip().lstrip("@").lower() for parte in crudo.split(",") if parte.strip()}
+
+
 TELEGRAM_BOT_TOKEN = (os.getenv("TELEGRAM_BOT_TOKEN") or "").strip()
 TELEGRAM_ALLOWED_IDS = _ids_telegram()
+TELEGRAM_ALLOWED_USERS = _usernames_telegram()
 
 # Clasificador: OpenRouter (o cualquier endpoint compatible con la API de OpenAI)
 LLM_API_KEY = (os.getenv("OPENROUTER_API_KEY") or os.getenv("LLM_API_KEY") or "").strip()
