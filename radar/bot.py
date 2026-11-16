@@ -100,7 +100,7 @@ def _kb_categorias():
 
 def _kb_niveles():
     botones = [
-        InlineKeyboardButton(f"{codigo} · {niv['nombre']}", callback_data=f"niv:{codigo}")
+        InlineKeyboardButton(niv["urgencia"], callback_data=f"niv:{codigo}")
         for codigo, niv in manual.NIVELES.items()
     ]
     return InlineKeyboardMarkup(_filas_de_a_dos(botones))
@@ -192,32 +192,29 @@ def _texto_propuesta(cls: dict) -> str:
     lineas = []
     if cls.get("resumen"):
         lineas.extend(["📝 Resumen:", cls["resumen"], ""])
-    lineas.extend(
-        [
-            "Clasificación propuesta (la decidís vos):",
-            f"• Categoría: {cls['categoria']}",
-            f"• Nivel: {cls['nivel']} — {nivel['nombre']}",
-        ]
-    )
+    lineas.append("👉 Qué hay que hacer:")
+    lineas.append(cls["accion_recomendada"])
+    lineas.append("")
+    lineas.append(f"Urgencia: {nivel['urgencia']} · Área: {cls['area']}")
+    detalle = f"Tipo: {cls['categoria']}"
     if cls.get("tema"):
-        lineas.append(f"• Tema: {cls['tema']}")
+        detalle += f" · Tema: {cls['tema']}"
     if cls.get("ubicacion"):
-        lineas.append(f"• Ubicación (hipótesis): {cls['ubicacion']}")
-    lineas.append(f"• Área sugerida: {cls['area']}")
-    lineas.append(f"• Acción recomendada: {cls['accion_recomendada']}")
+        detalle += f" · 📍 {cls['ubicacion']}"
+    lineas.append(detalle)
     if cls.get("justificacion"):
-        lineas.append(f"• Por qué: {cls['justificacion']}")
+        lineas.append(f"Por qué: {cls['justificacion']}")
     if cls.get("confianza") == "baja":
         lineas.append("")
         lineas.append("⚠️ El análisis tiene poca información para trabajar: revisalo bien antes de subirlo.")
     if cls.get("faltantes"):
         lineas.append("")
-        lineas.append("Para afinar el análisis me ayudaría saber:")
+        lineas.append("Me ayudaría saber:")
         for pedido in cls["faltantes"]:
             lineas.append(f"– {pedido}")
         lineas.append("(tocá ➕ Agregar info y contámelo)")
     lineas.append("")
-    lineas.append("¿Lo subo al panel?")
+    lineas.append("¿Lo subo al panel? (la decisión es tuya)")
     return "\n".join(lineas)
 
 
@@ -228,9 +225,9 @@ def _texto_final(caso_id: int, cls: dict) -> str:
         [
             f"📋 Caso #{caso_id} subido al panel.",
             "",
-            f"Categoría: {cls['categoria']} · Nivel: {cls['nivel']} — {niv['nombre']} · Área: {cls['area']}",
-            f"Según el manual: {cat['procedimiento']} (Responsable: {cat['responsable']})",
-            f"Escalamiento {cls['nivel']}: {niv['escalamiento']} Plazo: {niv['plazo']}.",
+            f"Tipo: {cls['categoria']} · Urgencia: {niv['urgencia']} · Área: {cls['area']}",
+            f"Medidas según el manual: {cat['procedimiento']} (Responsable: {cat['responsable']})",
+            f"{niv['escalamiento']} Plazo: {niv['plazo']}.",
             "",
             f"👉 Seguimiento y debate: {config.PANEL_BASE_URL}/caso/{caso_id}",
         ]
@@ -516,7 +513,7 @@ async def categoria_elegida(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await _quitar_teclado(update)
     indice = int(query.data.split(":", 1)[1])
     context.user_data["categoria_elegida"] = _CATEGORIAS[indice]
-    await query.message.reply_text("¿Qué nivel de criticidad?", reply_markup=_kb_niveles())
+    await query.message.reply_text("¿Qué tan urgente es?", reply_markup=_kb_niveles())
     return ELEGIR_NIVEL
 
 

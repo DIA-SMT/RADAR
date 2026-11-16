@@ -6,8 +6,8 @@
   <span class="chip">Total: <b>{{ conteo.total }}</b></span>
   {% for codigo, niv in NIVELES.items() %}
     <span class="chip" style="border-color: {{ COLORES_NIVEL[codigo] }}55;">
-      <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ ICONOS_NIVEL[codigo] }} {{ codigo }}</span>
-      {{ niv.nombre }}: <b>{{ conteo.por_nivel.get(codigo, 0) }}</b>
+      <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ ICONOS_NIVEL[codigo] }}</span>
+      {{ niv.urgencia }}: <b>{{ conteo.por_nivel.get(codigo, 0) }}</b>
     </span>
   {% endfor %}
 </div>
@@ -21,9 +21,9 @@
       {% endfor %}
     </select>
     <select name="nivel">
-      <option value="">Todos los niveles</option>
+      <option value="">Todas las urgencias</option>
       {% for codigo, niv in NIVELES.items() %}
-        <option value="{{ codigo }}" {% if filtros.nivel == codigo %}selected{% endif %}>{{ codigo }} — {{ niv.nombre }}</option>
+        <option value="{{ codigo }}" {% if filtros.nivel == codigo %}selected{% endif %}>{{ niv.urgencia }}</option>
       {% endfor %}
     </select>
     <select name="estado">
@@ -47,7 +47,7 @@
         <th style="width:110px;">Fecha</th>
         <th>Evidencia</th>
         <th style="width:150px;">Categoría</th>
-        <th style="width:60px;">Nivel</th>
+        <th style="width:120px;">Urgencia</th>
         <th style="width:140px;">Área</th>
         <th style="width:110px;">Estado</th>
       </tr>
@@ -73,7 +73,7 @@
         </td>
         <td>
           {% if c.nivel %}
-            <span class="badge" style="background:{{ COLORES_NIVEL[c.nivel] }}; color:#fff;">{{ ICONOS_NIVEL[c.nivel] }} {{ c.nivel }}</span>
+            <span class="badge" style="background:{{ COLORES_NIVEL[c.nivel] }}; color:#fff; white-space:nowrap;">{{ ICONOS_NIVEL[c.nivel] }} {{ NIVELES[c.nivel].urgencia }}</span>
           {% else %}<span class="muted">—</span>{% endif %}
         </td>
         <td>{{ c.area or "—" }}</td>

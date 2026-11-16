@@ -66,27 +66,33 @@ REGLAS_ANTE_DUDA = [
     "La clasificación siempre puede corregirse; la corrección queda registrada.",
 ]
 
+# "urgencia" es lo que ve la gente (pedido del equipo: nada de códigos N1-N4 en pantalla);
+# el código interno sigue existiendo porque el Manual y el escalamiento se definen con él.
 NIVELES = {
     "N1": {
         "nombre": "Ordinario",
+        "urgencia": "Puede esperar",
         "descripcion": "Alcance local, sin crecimiento.",
         "escalamiento": "Queda en el área competente, circuito habitual.",
         "plazo": "Circuito habitual",
     },
     "N2": {
         "nombre": "Atención",
+        "urgencia": "Atender pronto",
         "descripcion": "El tema se repite o crece.",
         "escalamiento": "Aviso a la conducción del área.",
         "plazo": "Dentro de 24 horas",
     },
     "N3": {
         "nombre": "Alerta",
+        "urgencia": "Urgente",
         "descripcion": "Impacto institucional o presencia en medios.",
         "escalamiento": "Escala al Comité de Respuesta.",
         "plazo": "Dentro de 4 horas",
     },
     "N4": {
         "nombre": "Crisis",
+        "urgencia": "Crítico",
         "descripcion": "Riesgo reputacional, sanitario o de seguridad.",
         "escalamiento": "Convocatoria inmediata del Comité.",
         "plazo": "Sin demora",

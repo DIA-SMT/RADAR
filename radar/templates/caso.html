@@ -14,7 +14,7 @@
   {% endif %}
   {% if caso.nivel %}
     <span class="badge" style="background:{{ COLORES_NIVEL[caso.nivel] }}; color:#fff; font-size:13.5px;">
-      {{ ICONOS_NIVEL[caso.nivel] }} {{ caso.nivel }} — {{ NIVELES[caso.nivel].nombre }}</span>
+      {{ ICONOS_NIVEL[caso.nivel] }} {{ NIVELES[caso.nivel].urgencia }}</span>
   {% endif %}
   {% set colE = COLORES_ESTADO.get(caso.estado, '#64748b') %}
   <span class="badge" style="background:{{ colE }}1a; color:{{ colE }}; font-size:13.5px;">{{ ESTADOS.get(caso.estado, caso.estado) }}</span>
@@ -132,7 +132,7 @@
         </select>
         <select name="nivel">
           {% for codigo, niv in NIVELES.items() %}
-            <option value="{{ codigo }}" {% if caso.nivel == codigo %}selected{% endif %}>{{ codigo }} — {{ niv.nombre }}</option>
+            <option value="{{ codigo }}" {% if caso.nivel == codigo %}selected{% endif %}>{{ niv.urgencia }}</option>
           {% endfor %}
         </select>
         <button type="submit">Guardar</button>
@@ -147,7 +147,7 @@
         <dt>Procedimiento</dt><dd><b>{{ manual_cat.procedimiento }}</b></dd>
         <dt>Responsable</dt><dd>{{ manual_cat.responsable }}</dd>
         {% if manual_niv %}
-        <dt>Escalamiento {{ caso.nivel }}</dt>
+        <dt>Escalamiento</dt>
         <dd>{{ manual_niv.escalamiento }} <span class="muted">Plazo: {{ manual_niv.plazo }}.</span></dd>
         {% endif %}
       </dl>
