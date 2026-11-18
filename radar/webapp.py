@@ -13,9 +13,10 @@ import base64
 import hashlib
 import hmac
 import logging
+import re
 import secrets
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -93,6 +94,9 @@ if config.PUBLIC_DIR.is_dir():
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 templates.env.filters["fecha"] = (
     lambda s: f"{s[8:10]}/{s[5:7]}/{s[0:4]} {s[11:16]}" if s and len(s) >= 16 else (s or "—")
+)
+templates.env.filters["fecha_corta"] = (
+    lambda s: f"{s[8:10]}/{s[5:7]}/{s[0:4]}" if s and len(s) >= 10 else (s or "—")
 )
 
 
@@ -315,6 +319,65 @@ def index(
         "usuario": usuario,
     }
     return templates.TemplateResponse(request, "index.html", contexto)
+
+
+_RE_FECHA = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+@app.get("/informe")
+async def informe(
+    request: Request,
+    desde: str = "",
+    hasta: str = "",
+    generar: str = "",
+    usuario: str = Depends(usuario_actual),
+):
+    """Informe del período: estadísticas + resumen ejecutivo redactado por la IA."""
+    hoy = db.ahora_dt().date()
+    if not _RE_FECHA.match(hasta or ""):
+        hasta = hoy.isoformat()
+    if not _RE_FECHA.match(desde or ""):
+        desde = (hoy - timedelta(days=6)).isoformat()
+    if desde > hasta:
+        desde, hasta = hasta, desde
+
+    casos = [_con_edad_y_plazo(c) for c in db.casos_entre(desde, hasta)]
+    stats = {
+        "total": len(casos),
+        "por_categoria": {},
+        "por_nivel": {},
+        "sin_decision": 0,
+        "fuera_plazo": 0,
+        "cerrados": 0,
+    }
+    for caso in casos:
+        if caso.get("categoria"):
+            stats["por_categoria"][caso["categoria"]] = stats["por_categoria"].get(caso["categoria"], 0) + 1
+        if caso.get("nivel"):
+            stats["por_nivel"][caso["nivel"]] = stats["por_nivel"].get(caso["nivel"], 0) + 1
+        if caso.get("estado") in _ESTADOS_CERRADOS:
+            stats["cerrados"] += 1
+        elif not caso.get("decision"):
+            stats["sin_decision"] += 1
+        if caso.get("vencido"):
+            stats["fuera_plazo"] += 1
+
+    texto_informe, ia_fallo = None, False
+    if generar and casos:
+        texto_informe = await classifier.resumen_periodo(casos, desde, hasta)
+        ia_fallo = texto_informe is None
+    contexto = _contexto_base() | {
+        "request": request,
+        "usuario": usuario,
+        "desde": desde,
+        "hasta": hasta,
+        "stats": stats,
+        "casos": casos,
+        "texto_informe": texto_informe,
+        "ia_fallo": ia_fallo,
+        "genero": bool(generar),
+    }
+    return templates.TemplateResponse(request, "informe.html", contexto)
 
 
 @app.get("/caso/{caso_id}")

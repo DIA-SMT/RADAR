@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block titulo %}Informe del período — RADAR{% endblock %}
+{% block contenido %}
+
+<p style="margin-bottom:14px;"><a href="/">← Volver al listado</a></p>
+<h1 style="font-size:22px; margin-bottom:4px;">📊 Informe del período</h1>
+<p class="muted" style="margin-bottom:18px;">Elegí las fechas y el sistema redacta un resumen ejecutivo de lo registrado: panorama, temas, lo que requiere atención y lo resuelto.</p>
+
+<div class="card">
+  <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+    <label class="muted">Desde
+      <input type="date" name="desde" value="{{ desde }}" style="font:inherit; padding:7px 10px; border:1px solid #c3d4ec; border-radius:8px; margin-left:6px;">
+    </label>
+    <label class="muted">Hasta
+      <input type="date" name="hasta" value="{{ hasta }}" style="font:inherit; padding:7px 10px; border:1px solid #c3d4ec; border-radius:8px; margin-left:6px;">
+    </label>
+    <input type="hidden" name="generar" value="1">
+    <button type="submit">Generar informe</button>
+  </form>
+</div>
+
+<div class="chips">
+  <span class="chip">Casos del período: <b>{{ stats.total }}</b></span>
+  {% for codigo, niv in NIVELES.items() %}
+    {% if stats.por_nivel.get(codigo) %}
+      <span class="chip" style="border-color: {{ COLORES_NIVEL[codigo] }}55;">
+        <span style="color: {{ COLORES_NIVEL[codigo] }}; font-weight:700;">{{ ICONOS_NIVEL[codigo] }}</span>
+        {{ niv.urgencia }}: <b>{{ stats.por_nivel[codigo] }}</b>
+      </span>
+    {% endif %}
+  {% endfor %}
+  {% if stats.sin_decision %}<span class="chip" style="border-color: var(--azul); color: var(--azul);">Sin decisión: <b>{{ stats.sin_decision }}</b></span>{% endif %}
+  {% if stats.fuera_plazo %}<span class="chip" style="border-color: #dc262655; color: #dc2626;">⏰ Fuera de plazo: <b>{{ stats.fuera_plazo }}</b></span>{% endif %}
+  {% if stats.cerrados %}<span class="chip" style="border-color: #16a34a55; color: #16a34a;">Resueltos/cerrados: <b>{{ stats.cerrados }}</b></span>{% endif %}
+</div>
+
+{% if stats.por_categoria %}
+<div class="card">
+  <h2>Composición por tipo</h2>
+  <div class="chips" style="margin-bottom:0;">
+    {% for nombre, cantidad in stats.por_categoria | dictsort(by='value', reverse=true) %}
+      {% set col = COLORES_CATEGORIA.get(nombre, '#64748b') %}
+      <span class="chip" style="border-color: {{ col }}55;"><span style="color:{{ col }};">{{ nombre }}</span>: <b>{{ cantidad }}</b></span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if texto_informe %}
+<div class="card" style="border-left: 4px solid var(--azul);">
+  <h2>Resumen ejecutivo ({{ desde | fecha_corta }} al {{ hasta | fecha_corta }})</h2>
+  <div style="white-space:pre-wrap; max-width:70ch;">{{ texto_informe }}</div>
+  <p class="muted" style="margin-top:14px; font-size:12.5px;">
+    Redactado con IA sobre los {{ stats.total }} casos del período. Es un borrador de apoyo:
+    revisalo antes de compartirlo. Solo refleja lo cargado en RADAR, no toda la conversación en redes.
+  </p>
+</div>
+{% elif genero and ia_fallo and stats.total %}
+<div class="card"><p class="muted">No se pudo generar el resumen (el servicio de análisis no respondió). Probá de nuevo en un momento.</p></div>
+{% elif genero and not stats.total %}
+<div class="card"><p class="muted">No hay casos registrados en ese período.</p></div>
+{% endif %}
+
+{% endblock %}

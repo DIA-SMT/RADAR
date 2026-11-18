@@ -262,6 +262,15 @@ def listar_casos(
         ).fetchall()
 
 
+def casos_entre(desde: str, hasta: str, limite: int = 500) -> list:
+    """Casos creados entre dos fechas (YYYY-MM-DD, inclusive)."""
+    with get_conn() as conn:
+        return conn.execute(
+            _q(f"SELECT * FROM casos WHERE creado_en >= ? AND creado_en <= ? {_ORDEN_TRIAJE} LIMIT ?"),
+            (f"{desde} 00:00:00", f"{hasta} 23:59:59", limite),
+        ).fetchall()
+
+
 def ultimos_casos(limite: int = 5) -> list:
     with get_conn() as conn:
         return conn.execute(
